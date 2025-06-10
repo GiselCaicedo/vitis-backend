@@ -65,32 +65,20 @@ export const getHomeDashboardData = async (req, res) => {
     `;
     
     // Tasa de conversión (usando una aproximación basada en ventas completadas vs pendientes)
-    const tasaConversionQuery = `
-      SELECT 
-        (COUNT(CASE WHEN Estado = 'Completada' THEN 1 END)::float / 
-         NULLIF(COUNT(*), 0) * 100) as tasa_conversion_hoy,
-        (SELECT (COUNT(CASE WHEN Estado = 'Completada' THEN 1 END)::float / 
-                NULLIF(COUNT(*), 0) * 100)
-         FROM Ventas WHERE Fecha_venta = (DATE '${formattedDate}' - INTERVAL '1 day')) as tasa_conversion_ayer
-      FROM Ventas 
-      WHERE Fecha_venta = DATE '${formattedDate}'
-    `;
-    
+
     try {
       // Ejecutar todas las consultas de resumen en paralelo
-      const [ventasHoyResult, nuevosClientesResult, productosActivosResult, tasaConversionResult] = 
+      const [ventasHoyResult, nuevosClientesResult, productosActivosResult] = 
         await Promise.all([
           pool.query(ventasQuery),
           pool.query(nuevosClientesQuery),
           pool.query(productosActivosQuery),
-          pool.query(tasaConversionQuery)
         ]);
       
       // Formatear datos de resumen
       const ventasHoy = ventasHoyResult.rows[0] || { total_ventas_hoy: 0, total_ventas_ayer: 0 };
       const nuevosClientes = nuevosClientesResult.rows[0] || { nuevos_clientes_hoy: 0, nuevos_clientes_ayer: 0 };
       const productosActivos = productosActivosResult.rows[0] || { productos_activos: 0, productos_activos_ayer: 0 };
-      const tasaConversion = tasaConversionResult.rows[0] || { tasa_conversion_hoy: 0, tasa_conversion_ayer: 0 };
       
       // Calcular tendencias
       const ventasTrend = ventasHoy.total_ventas_ayer > 0 
@@ -105,10 +93,7 @@ export const getHomeDashboardData = async (req, res) => {
         ? (productosActivos.productos_activos - productosActivos.productos_activos_ayer) 
         : 0;
       
-      const conversionTrend = tasaConversion.tasa_conversion_ayer > 0 
-        ? ((tasaConversion.tasa_conversion_hoy - tasaConversion.tasa_conversion_ayer)).toFixed(1) 
-        : 0;
-      
+ 
       // Añadir datos de resumen al objeto de respuesta
       dashboardData.summaryData = [
         { 
@@ -132,13 +117,7 @@ export const getHomeDashboardData = async (req, res) => {
           icon: 'package',
           color: 'bg-purple-500' 
         },
-        { 
-          title: 'Tasa de conversión', 
-          value: `${parseFloat(tasaConversion.tasa_conversion_hoy || 0).toFixed(2)}%`, 
-          trend: `${conversionTrend > 0 ? '+' : ''}${conversionTrend}%`,
-          icon: 'percent',
-          color: 'bg-amber-500' 
-        }
+       
       ];
     } catch (error) {
       console.error('Error al obtener datos de resumen:', error);
