@@ -173,7 +173,6 @@ export const getVentaDetalle = async (req, res) => {
   }
 };
 
-// Crear una nueva venta
 export const createVenta = async (req, res) => {
   const client = await pool.connect();
   
@@ -265,16 +264,18 @@ export const createVenta = async (req, res) => {
         producto.descuento || 0
       ]);
       
-      // Actualizar el stock del producto (esto también podría manejarse con el trigger ya existente)
+      // ? SOLUCIÓN: Solo actualizar el stock, el trigger se encarga del movimiento
       const updateStockQuery = `
         UPDATE Productos
-        SET Stock_actual = Stock_actual - $1
+        SET Stock_actual = Stock_actual - $1,
+            Ultima_actualizacion = CURRENT_TIMESTAMP
         WHERE ID_producto = $2
       `;
       
       await client.query(updateStockQuery, [producto.cantidad, producto.productoId]);
       
-      // Registrar el movimiento de inventario
+      // ? COMENTAR O ELIMINAR ESTA PARTE - El trigger ya lo hace
+      /*
       const insertMovimientoQuery = `
         INSERT INTO Movimientos_inventario(
           Tipo_movimiento,
@@ -294,6 +295,9 @@ export const createVenta = async (req, res) => {
         `Venta ID: ${ventaId}`,
         ventaId
       ]);
+      */
+      
+      console.log(`? Producto procesado: ID ${producto.productoId}, Cantidad: ${producto.cantidad}`);
     }
     
     await client.query('COMMIT');
