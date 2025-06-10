@@ -14,4 +14,6 @@ router.put('/:id/resolve', notificationController.resolveNotification);
 router.put('/:id/ignore', notificationController.ignoreNotification);
 router.put('/product/:id/resolve', notificationController.resolveProductNotifications);
 
+router.post('/send-alert', notificationController.sendEmailAlert);
+
 export default router;
