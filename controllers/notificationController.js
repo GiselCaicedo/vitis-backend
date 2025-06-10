@@ -1,4 +1,5 @@
 import { pool } from '../config/db.js';
+import { sendStockAlert } from '../services/mailController.js';
 
 // Obtener todas las notificaciones de alertas de stock
 export const getAllNotifications = async (req, res) => {
@@ -290,6 +291,27 @@ export const resolveProductNotifications = async (req, res) => {
     console.error('Error al resolver notificaciones de producto:', error);
     return res.status(500).json({
       error: 'Error al resolver notificaciones de producto',
+      message: error.message
+    });
+  }
+};
+
+// **NUEVA FUNCIÓN: Enviar alerta de stock por correo**
+export const sendEmailAlert = async (req, res) => {
+  try {
+    const result = await sendStockAlert();
+    
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+      data: result.summary || null
+    });
+
+  } catch (error) {
+    console.error('Error al enviar alerta por correo:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Error al enviar alerta por correo',
       message: error.message
     });
   }
