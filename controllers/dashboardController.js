@@ -104,7 +104,7 @@ export const getHomeDashboardData = async (req, res) => {
           color: 'bg-blue-500' 
         },
         { 
-          title: 'Nuevos clientes', 
+          title: 'Nuevas ventas', 
           value: nuevosClientes.nuevos_clientes_hoy || 0, 
           trend: `${clientesTrend > 0 ? '+' : ''}${clientesTrend}`,
           icon: 'user',
